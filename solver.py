@@ -25,7 +25,51 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         A dictionary mapping drop-off location to a list of homes of TAs that got off at that particular location
         NOTE: both outputs should be in terms of indices not the names of the locations themselves
     """
-    pass
+    # SHORTHANDS:
+    # nx = networkx
+    locations = list_of_locations
+    homes = list_of_homes
+
+    # Find index i where the car starts
+    start_index = locations.index(starting_car_location)
+
+    # Convert adjacency matrix representation to graph in networkx [Return Type is (graph, msg=_)]
+    graph, _ = adjacency_matrix_to_graph(adjacency_matrix)
+    
+    # Store number of "vertices" V
+    V = len(locations)
+
+    # Run networkx's Floyd Warshall Alg (V^3 runtime, V^2 space)
+        #   distance = {(source, target), dist} dictionary of shortest path distance
+        #   pred     = {(source, target), ?} dictionary of predecessors
+    distance, pred = nx.floyd_warshall(graph)
+
+
+
+
+
+
+    car_path = _
+
+    # Make outputs in terms of indices, not locations
+    output_locations = convert_locations_to_indices(car_path, locations)
+    dropoff_locations = _
+
+    # DEBUG COST
+    c, m = cost_of_solution(graph, car_path, dropoff_locations)
+    print(c)
+    print(m)
+
+    # Return two dictionaries
+    return output_locations, dropoff_locations
+
+    ########################################################################
+    # Hard-Coded Floyd Warshall Algorithm for All-Pairs Shortest Paths (V^3)
+        # dist = map(lambda i : map(lambda j : j , i) , graph)
+        # for i in range(V):
+        #     for j in range(V):
+        #         for k in range(V):
+        #             dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
 
 """
 ======================================================================
