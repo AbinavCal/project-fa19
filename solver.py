@@ -1,3 +1,4 @@
+# from __future__ import print_function
 import os
 import sys
 sys.path.append('..')
@@ -5,12 +6,14 @@ sys.path.append('../..')
 import argparse
 import utils
 from student_utils import *
+import numpy
 
 
 import random
-from __future__ import print_function
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
+
+# from pyscipopt import Model, quicksum, multidict
 
 """
 ======================================================================
@@ -48,12 +51,58 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # Run networkx's Floyd Warshall Alg (V^3 runtime, V^2 space)
         #   distance = {(source, target), dist} dictionary of shortest path distance
         #   pred     = {(source, target), ?} dictionary of predecessors
-    distance, _ = nx.floyd_warshall(graph)
+    distance = nx.floyd_warshall(graph)
 
     # Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
 
     # Find dropoff points D
+    dropoff_points = range(D)       # TODO
+    x = set()
+    
+    while len(x) < (int) (len(locations)/5):
+        y = random.randint(1, len(locations))
+        if y not in x:
+            x.add(y)
+    dropoff_points = list(x)
+    print("dropoff: ", dropoff_points)
+    print("\n")
+    
+
+
+    # def flp(I,J,d,M,f,c):
+    #     model = Model("flp")
+    #     x,y = {},{}
+    #     for j in J:
+    #         y[j] = model.addVar(vtype="B", name="y(%s)"%j)
+    #         for i in I:
+    #             x[i,j] = model.addVar(vtype="C", name="x(%s,%s)"%(i,j))
+    #     for i in I:
+    #         model.addCons(quicksum(x[i,j] for j in J) == d[i], "Demand(%s)"%i)
+    #     for j in M:
+    #         model.addCons(quicksum(x[i,j] for i in I) <= M[j]*y[j], "Capacity(%s)"%i)
+    #     for (i,j) in x:
+    #         model.addCons(x[i,j] <= d[i]*y[j], "Strong(%s,%s)"%(i,j))
+    #     model.setObjective(
+    #         quicksum(f[j]*y[j] for j in J) +
+    #         quicksum(c[i,j]*x[i,j] for i in I for j in J),
+    #         "minimize")
+    #     model.data = x,y
+    #     return model
+
+    # model = flp(I, J, d, M, f, c)
+    # model.optimize()
+    # EPS = 1.e-6
+    # x,y = model.__data
+    # edges = [(i,j) for (i,j) in x if model.GetVal(x[i,j]) > EPS]
+    # facilities = [j for j in y if model.GetVal(y[j]) > EPS]
+    # print ("Optimal value=", model.GetObjVal())
+    # print ("Facilities at nodes:", facilities)
+    # print ("Edges:", edges)
+
+
+
+
 
 
 
@@ -67,31 +116,34 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     
     # Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
-    induced_adj_matrix = induced.adjacency_matrix(induced)
-    # set #cars = 1, start index = start_index
-    # induced_adj_matrix['num_vehicles'] = 1
-    # induced_adj_matrix['depot'] = start_index
-        
+    induced_adj_matrix = nx.to_numpy_matrix(induced)
+    # print("graph", graph)
+    # print("induced", induced)
+    print("adj matrix", induced_adj_matrix)
+    print("\n")
+    data = {}
+    data['distance_matrix'] = induced_adj_matrix
+    data['num_vehicles'] = 1
+    data['depot'] = 0
+
     # Returns (distance, path)
-    def get_length_and_path(manager, routing, assignment):
-        distance = assignment.ObjectiveValue()
+    def get_path(manager, routing, assignment):
         index = routing.Start(0)
         path = []
         while not routing.IsEnd(index):
-            path += manager.IndexToNode(index)
-            previous_index = index
+            path.append(manager.IndexToNode(index))
             index = assignment.Value(routing.NextVar(index))
-        return distance, path
+        return path
 
     # Create the routing index manager and Routing Model
-    manager = pywrapcp.RoutingIndexManager(len(induced_adj_matrix['distance_matrix']), 1, start_index)
+    manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']), data['num_vehicles'], data['depot'])
     routing = pywrapcp.RoutingModel(manager)
 
     def distance_callback(from_index, to_index):
         """Returns the distance between the two nodes."""
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
-        return induced_adj_matrix['distance_matrix'][from_node][to_node]
+        return data['distance_matrix'][from_node, to_node]
 
     transit_callback_index = routing.RegisterTransitCallback(distance_callback)
 
@@ -103,29 +155,27 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
 
-    # Solve the problem.
+    # Solve the problem and determine path/total distance
     assignment = routing.SolveWithParameters(search_parameters)
-
-    # Print solution on console.
     if assignment:
-        distance, car_path = get_length_and_path(manager, routing, assignment)
+        car_path = get_path(manager, routing, assignment)
+        car_path.append(car_path[0])
 
     # Create dropoff location dictionary
     dropoff_dictionary = {}
     for index in car_path:
         if "dropoff":                                                               # TODO
-            dropoff_dictionary[index] = "TAs getting dropped off"                    # TODO
+            dropoff_dictionary[index] = [3,4]                                       # TODO
 
     # DEBUG COST
     c, m = cost_of_solution(graph, car_path, dropoff_dictionary)
-    print(c)
-    print(m)                                                                      
+    print("cost:", c)
+    print(m)
+    print("car_path:", car_path)
+    print("\n")
 
     # Return two dictionaries
-    return car_path, dropoff_dictionary
-
-
-    
+    return car_path, dropoff_dictionary    
 
 """
 ======================================================================
@@ -148,7 +198,9 @@ def convertToFile(path, dropoff_mapping, path_to_file, list_locs):
     string += str(dropoffNumber) + '\n'
     for dropoff in dropoff_mapping.keys():
         strDrop = list_locs[dropoff] + ' '
+        print(dropoff_mapping)
         for node in dropoff_mapping[dropoff]:
+            print(node)
             strDrop += list_locs[node] + ' '
         strDrop = strDrop.strip()
         strDrop += '\n'
