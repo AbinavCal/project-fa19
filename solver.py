@@ -56,6 +56,7 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
 
     ##### Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
+    # D = 8
 
     ##### Find dropoff points D
     dists_to_home = []
@@ -70,13 +71,15 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     enum_dists = list(enumerate(dists_to_home))
     enum_dists.sort(key=lambda x: x[1])
     dists_to_home = [elem[0] for elem in enum_dists[:D]]
-    print("indices: " + str(dists_to_home)) 
-     
+    # print("indices: " + str(dists_to_home)) 
+
+    dropoff_points = dists_to_home
+
     ##### Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
     induced_adj_matrix = nx.to_numpy_matrix(induced)
-    print("original matrix:\n", nx.to_numpy_matrix(graph))
-    print("adj matrix:\n", induced_adj_matrix)
+    # print("original matrix:\n", nx.to_numpy_matrix(graph))
+    # print("adj matrix:\n", induced_adj_matrix)
     # print("\n")
     data = {}
     data['distance_matrix'] = induced_adj_matrix
@@ -142,40 +145,40 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
             dropoff_dictionary[d] = [i]
         else:
             dropoff_dictionary[d].append(i)
-    print(dropoff_dictionary)
+    # print(dropoff_dictionary)
 
-    print("temp:", temp)
+    # print("temp:", temp)
 
     actual_path = [temp[0]]
     for i in range(1, len(temp)):
-        print("going back from", temp[i])
+        # print("going back from", temp[i])
         prev = temp[i-1]
         curr = temp[i]
         y = [temp[i]]
-        temp_dict = pred[prev]
-        print(temp_dict)
+        temp_dict = predecessor[prev]
+        # print(temp_dict)
         while curr != prev:
             backtrack = temp_dict[curr]
             y.append(backtrack)
             curr = backtrack
         y.pop()
-        print("y:",y)
+        # print("y:",y)
         y.reverse()
-        print("y:",y)
+        # print("y:",y)
         actual_path.extend(y)
 
-    print(actual_path)
+    # print(actual_path)
     
 
     # DEBUG COST
-    print("car_path:", car_path)
-    print("temp:", temp)
-    print("actual_path:", actual_path)
-    print("# homes:", len(homes))
-    print("dropoff points:", dropoff_points)
-    print("# actual dropoffs:", len(dropoff_dictionary))
-    print("actual dropoffs:", dropoff_dictionary)
-    print("\n")
+    # print("car_path:", car_path)
+    # print("temp:", temp)
+    # print("actual_path:", actual_path)
+    # print("# homes:", len(homes))
+    # print("dropoff points:", dropoff_points)
+    # print("# actual dropoffs:", len(dropoff_dictionary))
+    # print("actual dropoffs:", dropoff_dictionary)
+    # print("\n")
 
     # print("\n")
     # # for i in range(len(actual_path)-1):
@@ -185,8 +188,8 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # # print("\n")
 
     c, m = cost_of_solution(graph, actual_path, dropoff_dictionary)
-    print("cost:", c)
-    print(m)
+    # print("cost:", c)
+    # print(m)
 
     # Return two dictionaries
     return actual_path, dropoff_dictionary    
