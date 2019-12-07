@@ -48,45 +48,81 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # Run networkx's Floyd Warshall Alg (V^3 runtime, V^2 space)
         #   distance = {(source, target), dist} dictionary of shortest path distance
         #   pred     = {(source, target), ?} dictionary of predecessors
-    distance, pred = nx.floyd_warshall(graph)
+    distance, _ = nx.floyd_warshall(graph)
 
     # Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
 
-    # Find dropoffs 
+    # Find dropoff points D
+
+
+
+
+
+
+
+
+
 
     
     # Compute the TSP on dropoffs
+    induced = graph.subgraph(dropoff_points)
+    induced_adj_matrix = induced.adjacency_matrix(induced)
+    # set #cars = 1, start index = start_index
+    # induced_adj_matrix['num_vehicles'] = 1
+    # induced_adj_matrix['depot'] = start_index
+        
+    # Returns (distance, path)
+    def get_length_and_path(manager, routing, assignment):
+        distance = assignment.ObjectiveValue()
+        index = routing.Start(0)
+        path = []
+        while not routing.IsEnd(index):
+            path += manager.IndexToNode(index)
+            previous_index = index
+            index = assignment.Value(routing.NextVar(index))
+        return distance, path
 
+    # Create the routing index manager and Routing Model
+    manager = pywrapcp.RoutingIndexManager(len(induced_adj_matrix['distance_matrix']), 1, start_index)
+    routing = pywrapcp.RoutingModel(manager)
 
+    def distance_callback(from_index, to_index):
+        """Returns the distance between the two nodes."""
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return induced_adj_matrix['distance_matrix'][from_node][to_node]
 
+    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
 
+    # Define cost of each arc.
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
+    # Setting first solution heuristic.
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
 
+    # Solve the problem.
+    assignment = routing.SolveWithParameters(search_parameters)
 
+    # Print solution on console.
+    if assignment:
+        distance, car_path = get_length_and_path(manager, routing, assignment)
 
-
-
-
-
-
-
-
-
-
-    car_path = _
-
-    # Make outputs in terms of indices, not locations
-    output_locations = convert_locations_to_indices(car_path, locations)
-    dropoff_locations = _
+    # Create dropoff location dictionary
+    dropoff_dictionary = {}
+    for index in car_path:
+        if "dropoff":                                                               # TODO
+            dropoff_dictionary[index] = "TAs getting dropped off"                    # TODO
 
     # DEBUG COST
-    c, m = cost_of_solution(graph, car_path, dropoff_locations)
+    c, m = cost_of_solution(graph, car_path, dropoff_dictionary)
     print(c)
     print(m)                                                                      
 
     # Return two dictionaries
-    return output_locations, dropoff_locations
+    return car_path, dropoff_dictionary
 
 
     
