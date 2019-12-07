@@ -4,8 +4,14 @@ sys.path.append('..')
 sys.path.append('../..')
 import argparse
 import utils
-
 from student_utils import *
+
+
+import random
+from __future__ import print_function
+from ortools.constraint_solver import routing_enums_pb2
+from ortools.constraint_solver import pywrapcp
+
 """
 ======================================================================
   Complete the following function.
@@ -44,10 +50,13 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         #   pred     = {(source, target), ?} dictionary of predecessors
     distance, pred = nx.floyd_warshall(graph)
 
+    # Calculate an approximate optimal D = len(dropoffs)
+    D = random.randint(1, V)
 
+    # Find dropoffs 
 
-
-
+    
+    # Compute the TSP on dropoffs
 
     car_path = _
 
@@ -58,7 +67,7 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # DEBUG COST
     c, m = cost_of_solution(graph, car_path, dropoff_locations)
     print(c)
-    print(m)
+    print(m)                                                                      
 
     # Return two dictionaries
     return output_locations, dropoff_locations
@@ -70,6 +79,8 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         #     for j in range(V):
         #         for k in range(V):
         #             dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
+
+    
 
 """
 ======================================================================
