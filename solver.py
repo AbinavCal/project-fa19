@@ -169,14 +169,17 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # Create dropoff location dictionary
     home_indices = convert_locations_to_indices(homes, locations)
     dropoff_dictionary = {}
-    for index in car_path:
-        if index in dropoff_points:
-            x = random.choice(home_indices)
-            home_indices.remove(x)
-            dropoff_dictionary[index] = [x]
+    # for index in car_path:
+    #     if index in dropoff_points:
+    #         x = random.choice(home_indices)
+    #         home_indices.remove(x)
+    #         dropoff_dictionary[index] = [x]
 
-    shift = [car_path[:len(car_path)]]
-    print("shift:", shift)
+    # for i in dropoff_points:
+    #     x = random.choice(home_indices)
+    #     home_indices.remove(x)
+    #     dropoff_dictionary[dropoff_points[i]] = [x]
+    # print(dropoff_dictionary)
 
     # DEBUG COST
     c, m = cost_of_solution(graph, car_path, dropoff_dictionary)
@@ -191,7 +194,7 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
 
     # Return two dictionaries
     print(dropoff_dictionary)
-    return car_path, dropoff_dictionary    
+    return dropoff_points, dropoff_dictionary    
 
 """
 ======================================================================
