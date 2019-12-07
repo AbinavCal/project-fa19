@@ -14,7 +14,7 @@ from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 
 # from pyscipopt import Model, quicksum, multidict
-from cvxopt import matrix, solvers
+# from cvxopt import matrix, solvers
 
 """
 ======================================================================
@@ -40,6 +40,9 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     locations = list_of_locations
     homes = list_of_homes
 
+    # print(locations)
+    # print(homes)
+
     # Find index i where the car starts
     start_index = locations.index(starting_car_location)
 
@@ -54,11 +57,13 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         #   pred     = {(source, target), ?} dictionary of predecessors
     distance = nx.floyd_warshall(graph)
 
+    # print(distance[0][1])
     # Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
 
     # Find dropoff points D
-    dropoff_points = range(D)       # TODO
+    # dropoff_points = range(D)       # TODO
+
     x = set()
     
     while len(x) < (int) (len(locations)/5):
@@ -66,10 +71,15 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         if y not in x:
             x.add(y)
     dropoff_points = list(x)
-    print("dropoff: ", dropoff_points)
-    print("\n")
     
-    print("adjacency matrix:", adjacency_matrix)
+    # dropoff_points = []    
+    # while len(dropoff_points) < len(homes):
+    #     dropoff_points.append(random.randint(1, len(locations)))
+
+    # print("dropoff: ", dropoff_points)
+    # print("\n")
+    
+    # print("adjacency matrix:", adjacency_matrix)
 
     # def flp(I,J,d,M,f,c):
     #     model = Model("flp")
@@ -105,31 +115,21 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
 
 
 
-    A = matrix([ [-1.0, -1.0, 0.0, 1.0], [1.0, -1.0, -1.0, -2.0] ])
-    b = matrix([ 1.0, -2.0, 0.0, 4.0 ])
-    c = matrix([ 2.0, 1.0 ])
-    sol=solvers.lp(c,A,b)
-    print(sol['x'])
+    # A = matrix([ [-1.0, -1.0, 0.0, 1.0], [1.0, -1.0, -1.0, -2.0] ])
+    # b = matrix([ 1.0, -2.0, 0.0, 4.0 ])
+    # c = matrix([ 2.0, 1.0 ])
+    # sol=solvers.lp(c,A,b)
+    # print(sol['x'])
+    # dropoff_points = sol['x']
 
 
-
-
-
-
-
-
-
-
-
-
-    
     # Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
     induced_adj_matrix = nx.to_numpy_matrix(induced)
     # print("graph", graph)
     # print("induced", induced)
     # print("adj matrix", induced_adj_matrix)
-    print("\n")
+    # print("\n")
     data = {}
     data['distance_matrix'] = induced_adj_matrix
     data['num_vehicles'] = 1
@@ -170,19 +170,23 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         car_path = get_path(manager, routing, assignment)
 
     # Create dropoff location dictionary
+    home_indices = convert_locations_to_indices(homes, locations)
     dropoff_dictionary = {}
     for index in car_path:
-        if "dropoff":                                                               # TODO
-            dropoff_dictionary[index] = [3,4]                                       # TODO
+        if index in dropoff_points:                                                               # TODO
+            x = random.choice(home_indices)
+            home_indices.remove(x)
+            dropoff_dictionary[index] = [x]                                       # TODO
 
     # DEBUG COST
     c, m = cost_of_solution(graph, car_path, dropoff_dictionary)
-    print("cost:", c)
-    print(m)
-    print("car_path:", car_path)
-    print("\n")
+    # print("cost:", c)
+    # print(m)
+    # print("car_path:", car_path)
+    # print("\n")
 
     # Return two dictionaries
+    # print(dropoff_dictionary)
     return car_path, dropoff_dictionary    
 
 """
@@ -206,9 +210,7 @@ def convertToFile(path, dropoff_mapping, path_to_file, list_locs):
     string += str(dropoffNumber) + '\n'
     for dropoff in dropoff_mapping.keys():
         strDrop = list_locs[dropoff] + ' '
-        print(dropoff_mapping)
         for node in dropoff_mapping[dropoff]:
-            print(node)
             strDrop += list_locs[node] + ' '
         strDrop = strDrop.strip()
         strDrop += '\n'
@@ -245,7 +247,7 @@ if __name__=="__main__":
     parser.add_argument('params', nargs=argparse.REMAINDER, help='Extra arguments passed in')
     args = parser.parse_args()
     output_directory = args.output_directory
-    if args.all:
+    if not args.all:
         input_directory = args.input
         solve_all(input_directory, output_directory, params=args.params)
     else:
