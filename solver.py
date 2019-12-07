@@ -35,8 +35,8 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         A dictionary mapping drop-off location to a list of homes of TAs that got off at that particular location
         NOTE: both outputs should be in terms of indices not the names of the locations themselves
     """
-    # SHORTHANDS:
-    # nx = networkx
+    ##### Startup
+    # SHORTHANDS
     locations = list_of_locations
     homes = list_of_homes
 
@@ -51,40 +51,28 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
 
     # Run networkx's Floyd Warshall Alg (V^3 runtime, V^2 space)
         #   distance = {(source, target), dist} dictionary of shortest path distance
-    pred, distance = nx.floyd_warshall_predecessor_and_distance(graph)
+        #   pred     = {(source, target), ?} dictionary of predecessors
+    predecessor, distance = nx.floyd_warshall_predecessor_and_distance(graph)
 
-
-    # print(distance[0][1])
-    # Calculate an approximate optimal D = len(dropoffs)
+    ##### Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
-    
-    # dropoff_points = []    
-    # while len(dropoff_points) < len(homes):
-    #     dropoff_points.append(random.randint(1, len(locations)))
 
-    # print("dropoff: ", dropoff_points)
-    # print("\n")
-    
-    # print("adjacency matrix:", adjacency_matrix)
+    ##### Find dropoff points D
+    dists_to_home = []
+    for source in range(V):
+        cum_dist = 0
+        ss_dists = distance[source]
+        for home in homes:
+            target = locations.index(home)
+            cum_dist += ss_dists[target]
+        dists_to_home.append(cum_dist)
 
-    x = set()
-    
-    while len(x) < (int) (len(locations)/5):
-        y = random.randint(1, len(locations))
-        if y not in x:
-            x.add(y)
-    dropoff_points = list(x)
-
-    while not nx.is_connected(graph.subgraph(dropoff_points)):
-        x = set()
-        while len(x) < (int) (len(locations)/5):
-            y = random.randint(1, len(locations))
-            if y not in x:
-                x.add(y)
-        dropoff_points = list(x)
-
-
-    # Compute the TSP on dropoffs
+    enum_dists = list(enumerate(dists_to_home))
+    enum_dists.sort(key=lambda x: x[1])
+    dists_to_home = [elem[0] for elem in enum_dists[:D]]
+    print("indices: " + str(dists_to_home)) 
+     
+    ##### Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
     induced_adj_matrix = nx.to_numpy_matrix(induced)
     print("original matrix:\n", nx.to_numpy_matrix(graph))
