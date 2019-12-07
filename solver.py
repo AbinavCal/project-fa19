@@ -35,13 +35,10 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
         A dictionary mapping drop-off location to a list of homes of TAs that got off at that particular location
         NOTE: both outputs should be in terms of indices not the names of the locations themselves
     """
-    # SHORTHANDS:
-    # nx = networkx
+    ##### Startup
+    # SHORTHANDS
     locations = list_of_locations
     homes = list_of_homes
-
-    # print(locations)
-    # print(homes)
 
     # Find index i where the car starts
     start_index = locations.index(starting_car_location)
@@ -55,73 +52,27 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # Run networkx's Floyd Warshall Alg (V^3 runtime, V^2 space)
         #   distance = {(source, target), dist} dictionary of shortest path distance
         #   pred     = {(source, target), ?} dictionary of predecessors
-    distance = nx.floyd_warshall(graph)
+    predecessor, distance = nx.floyd_warshall_predecessor_and_distance(graph)
 
-    # print(distance[0][1])
-    # Calculate an approximate optimal D = len(dropoffs)
+    ##### Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
 
-    # Find dropoff points D
-    # dropoff_points = range(D)       # TODO
+    ##### Find dropoff points D
+    dists_to_home = []
+    for source in range(V):
+        cum_dist = 0
+        ss_dists = distance[source]
+        for home in homes:
+            target = locations.index(home)
+            cum_dist += ss_dists[target]
+        dists_to_home.append(cum_dist)
 
-    x = set()
-    
-    while len(x) < (int) (len(locations)/5):
-        y = random.randint(1, len(locations))
-        if y not in x:
-            x.add(y)
-    dropoff_points = list(x)
-    
-    # dropoff_points = []    
-    # while len(dropoff_points) < len(homes):
-    #     dropoff_points.append(random.randint(1, len(locations)))
-
-    # print("dropoff: ", dropoff_points)
-    # print("\n")
-    
-    # print("adjacency matrix:", adjacency_matrix)
-
-    # def flp(I,J,d,M,f,c):
-    #     model = Model("flp")
-    #     x,y = {},{}
-    #     for j in J:
-    #         y[j] = model.addVar(vtype="B", name="y(%s)"%j)
-    #         for i in I:
-    #             x[i,j] = model.addVar(vtype="C", name="x(%s,%s)"%(i,j))
-    #     for i in I:
-    #         model.addCons(quicksum(x[i,j] for j in J) == d[i], "Demand(%s)"%i)
-    #     for j in M:
-    #         model.addCons(quicksum(x[i,j] for i in I) <= M[j]*y[j], "Capacity(%s)"%i)
-    #     for (i,j) in x:
-    #         model.addCons(x[i,j] <= d[i]*y[j], "Strong(%s,%s)"%(i,j))
-    #     model.setObjective(
-    #         quicksum(f[j]*y[j] for j in J) +
-    #         quicksum(c[i,j]*x[i,j] for i in I for j in J),
-    #         "minimize")
-    #     model.data = x,y
-    #     return model
-
-    # # c =     
-
-    # model = flp(I, J, d, M, f, c)
-    # model.optimize()
-    # EPS = 1.e-6
-    # x,y = model.__data
-    # edges = [(i,j) for (i,j) in x if model.GetVal(x[i,j]) > EPS]
-    # facilities = [j for j in y if model.GetVal(y[j]) > EPS]
-    # print ("Optimal value=", model.GetObjVal())
-    # print ("Facilities at nodes:", facilities)
-    # print ("Edges:", edges)
-
-    # A = matrix([ [-1.0, -1.0, 0.0, 1.0], [1.0, -1.0, -1.0, -2.0] ])
-    # b = matrix([ 1.0, -2.0, 0.0, 4.0 ])
-    # c = matrix([ 2.0, 1.0 ])
-    # sol=solvers.lp(c,A,b)
-    # print(sol['x'])
-    # dropoff_points = sol['x']
-
-
-    # Compute the TSP on dropoffs
+    enum_dists = list(enumerate(dists_to_home))
+    enum_dists.sort(key=lambda x: x[1])
+    dists_to_home = [elem[0] for elem in enum_dists[:D]]
+    print("indices: " + str(dists_to_home)) 
+     
+    ##### Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
     induced_adj_matrix = nx.to_numpy_matrix(induced)
     print("original matrix:\n", nx.to_numpy_matrix(graph))
