@@ -49,6 +49,22 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     car_path = _
 
     # Make outputs in terms of indices, not locations
@@ -63,13 +79,6 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # Return two dictionaries
     return output_locations, dropoff_locations
 
-    ########################################################################
-    # Hard-Coded Floyd Warshall Algorithm for All-Pairs Shortest Paths (V^3)
-        # dist = map(lambda i : map(lambda j : j , i) , graph)
-        # for i in range(V):
-        #     for j in range(V):
-        #         for k in range(V):
-        #             dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])
 
 """
 ======================================================================
