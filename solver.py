@@ -113,8 +113,6 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # print ("Facilities at nodes:", facilities)
     # print ("Edges:", edges)
 
-
-
     # A = matrix([ [-1.0, -1.0, 0.0, 1.0], [1.0, -1.0, -1.0, -2.0] ])
     # b = matrix([ 1.0, -2.0, 0.0, 4.0 ])
     # c = matrix([ 2.0, 1.0 ])
@@ -126,9 +124,8 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     # Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
     induced_adj_matrix = nx.to_numpy_matrix(induced)
-    # print("graph", graph)
-    # print("induced", induced)
-    # print("adj matrix", induced_adj_matrix)
+    print("original matrix:\n", nx.to_numpy_matrix(graph))
+    print("adj matrix:\n", induced_adj_matrix)
     # print("\n")
     data = {}
     data['distance_matrix'] = induced_adj_matrix
@@ -173,20 +170,27 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     home_indices = convert_locations_to_indices(homes, locations)
     dropoff_dictionary = {}
     for index in car_path:
-        if index in dropoff_points:                                                               # TODO
+        if index in dropoff_points:
             x = random.choice(home_indices)
             home_indices.remove(x)
-            dropoff_dictionary[index] = [x]                                       # TODO
+            dropoff_dictionary[index] = [x]
+
+    shift = [car_path[:len(car_path)]]
+    print("shift:", shift)
 
     # DEBUG COST
     c, m = cost_of_solution(graph, car_path, dropoff_dictionary)
-    # print("cost:", c)
-    # print(m)
-    # print("car_path:", car_path)
-    # print("\n")
+    print("cost:", c)
+    print(m)
+    print("car_path:", car_path)
+    print("# homes:", len(homes))
+    print("dropoff points:", dropoff_points)
+    print("# actual dropoffs:", len(dropoff_dictionary))
+    print("actual dropoffs:", dropoff_dictionary)
+    print("\n")
 
     # Return two dictionaries
-    # print(dropoff_dictionary)
+    print(dropoff_dictionary)
     return car_path, dropoff_dictionary    
 
 """
@@ -247,7 +251,7 @@ if __name__=="__main__":
     parser.add_argument('params', nargs=argparse.REMAINDER, help='Extra arguments passed in')
     args = parser.parse_args()
     output_directory = args.output_directory
-    if not args.all:
+    if args.all:
         input_directory = args.input
         solve_all(input_directory, output_directory, params=args.params)
     else:
