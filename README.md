@@ -1,7 +1,9 @@
 # project-fa19
 CS 170 Fall 2019 Project
 To run the code, pip install the following:
+  
   NetworkX
+  
   Google's OR-Tools
 
 We don't think anything else needs to be installed that would not already be.
