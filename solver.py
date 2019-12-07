@@ -72,8 +72,10 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     enum_dists.sort(key=lambda x: x[1])
     dists_to_home = [elem[0] for elem in enum_dists[:D]]
     # print("indices: " + str(dists_to_home)) 
-
+    # dists_to_home.append(start_index)
     dropoff_points = dists_to_home
+    
+    
 
     ##### Compute the TSP on dropoffs
     induced = graph.subgraph(dropoff_points)
@@ -252,7 +254,7 @@ if __name__=="__main__":
     parser.add_argument('params', nargs=argparse.REMAINDER, help='Extra arguments passed in')
     args = parser.parse_args()
     output_directory = args.output_directory
-    if args.all:
+    if not args.all:
         input_directory = args.input
         solve_all(input_directory, output_directory, params=args.params)
     else:
