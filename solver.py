@@ -40,9 +40,6 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     locations = list_of_locations
     homes = list_of_homes
 
-    # print(locations)
-    # print(homes)
-
     # Find index i where the car starts
     start_index = locations.index(starting_car_location)
 
@@ -54,23 +51,12 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
 
     # Run networkx's Floyd Warshall Alg (V^3 runtime, V^2 space)
         #   distance = {(source, target), dist} dictionary of shortest path distance
-        #   pred     = {(source, target), ?} dictionary of predecessors
-    distance = nx.floyd_warshall(graph)
+    pred, distance = nx.floyd_warshall_predecessor_and_distance(graph)
+
 
     # print(distance[0][1])
     # Calculate an approximate optimal D = len(dropoffs)
     D = random.randint(1, V)
-
-    # Find dropoff points D
-    # dropoff_points = range(D)       # TODO
-
-    x = set()
-    
-    while len(x) < (int) (len(locations)/5):
-        y = random.randint(1, len(locations))
-        if y not in x:
-            x.add(y)
-    dropoff_points = list(x)
     
     # dropoff_points = []    
     # while len(dropoff_points) < len(homes):
@@ -81,44 +67,21 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     
     # print("adjacency matrix:", adjacency_matrix)
 
-    # def flp(I,J,d,M,f,c):
-    #     model = Model("flp")
-    #     x,y = {},{}
-    #     for j in J:
-    #         y[j] = model.addVar(vtype="B", name="y(%s)"%j)
-    #         for i in I:
-    #             x[i,j] = model.addVar(vtype="C", name="x(%s,%s)"%(i,j))
-    #     for i in I:
-    #         model.addCons(quicksum(x[i,j] for j in J) == d[i], "Demand(%s)"%i)
-    #     for j in M:
-    #         model.addCons(quicksum(x[i,j] for i in I) <= M[j]*y[j], "Capacity(%s)"%i)
-    #     for (i,j) in x:
-    #         model.addCons(x[i,j] <= d[i]*y[j], "Strong(%s,%s)"%(i,j))
-    #     model.setObjective(
-    #         quicksum(f[j]*y[j] for j in J) +
-    #         quicksum(c[i,j]*x[i,j] for i in I for j in J),
-    #         "minimize")
-    #     model.data = x,y
-    #     return model
+    x = set()
+    
+    while len(x) < (int) (len(locations)/5):
+        y = random.randint(1, len(locations))
+        if y not in x:
+            x.add(y)
+    dropoff_points = list(x)
 
-    # # c =     
-
-    # model = flp(I, J, d, M, f, c)
-    # model.optimize()
-    # EPS = 1.e-6
-    # x,y = model.__data
-    # edges = [(i,j) for (i,j) in x if model.GetVal(x[i,j]) > EPS]
-    # facilities = [j for j in y if model.GetVal(y[j]) > EPS]
-    # print ("Optimal value=", model.GetObjVal())
-    # print ("Facilities at nodes:", facilities)
-    # print ("Edges:", edges)
-
-    # A = matrix([ [-1.0, -1.0, 0.0, 1.0], [1.0, -1.0, -1.0, -2.0] ])
-    # b = matrix([ 1.0, -2.0, 0.0, 4.0 ])
-    # c = matrix([ 2.0, 1.0 ])
-    # sol=solvers.lp(c,A,b)
-    # print(sol['x'])
-    # dropoff_points = sol['x']
+    while not nx.is_connected(graph.subgraph(dropoff_points)):
+        x = set()
+        while len(x) < (int) (len(locations)/5):
+            y = random.randint(1, len(locations))
+            if y not in x:
+                x.add(y)
+        dropoff_points = list(x)
 
 
     # Compute the TSP on dropoffs
@@ -181,20 +144,64 @@ def solve(list_of_locations, list_of_homes, starting_car_location, adjacency_mat
     #     dropoff_dictionary[dropoff_points[i]] = [x]
     # print(dropoff_dictionary)
 
+    temp = []
+    for i in car_path:
+        temp.append(dropoff_points[i])
+
+    for i in home_indices:
+        d = random.choice(temp)
+        if d not in dropoff_dictionary:
+            dropoff_dictionary[d] = [i]
+        else:
+            dropoff_dictionary[d].append(i)
+    print(dropoff_dictionary)
+
+    print("temp:", temp)
+
+    actual_path = [temp[0]]
+    for i in range(1, len(temp)):
+        print("going back from", temp[i])
+        prev = temp[i-1]
+        curr = temp[i]
+        y = [temp[i]]
+        temp_dict = pred[prev]
+        print(temp_dict)
+        while curr != prev:
+            backtrack = temp_dict[curr]
+            y.append(backtrack)
+            curr = backtrack
+        y.pop()
+        print("y:",y)
+        y.reverse()
+        print("y:",y)
+        actual_path.extend(y)
+
+    print(actual_path)
+    
+
     # DEBUG COST
-    c, m = cost_of_solution(graph, car_path, dropoff_dictionary)
-    print("cost:", c)
-    print(m)
     print("car_path:", car_path)
+    print("temp:", temp)
+    print("actual_path:", actual_path)
     print("# homes:", len(homes))
     print("dropoff points:", dropoff_points)
     print("# actual dropoffs:", len(dropoff_dictionary))
     print("actual dropoffs:", dropoff_dictionary)
     print("\n")
 
+    # print("\n")
+    # # for i in range(len(actual_path)-1):
+    # #     print("i:", i)
+    # #     print(actual_path[i], actual_path[i+1])
+    # #     print(distance[actual_path[i]][actual_path[i+1]])
+    # # print("\n")
+
+    c, m = cost_of_solution(graph, actual_path, dropoff_dictionary)
+    print("cost:", c)
+    print(m)
+
     # Return two dictionaries
-    print(dropoff_dictionary)
-    return dropoff_points, dropoff_dictionary    
+    return actual_path, dropoff_dictionary    
 
 """
 ======================================================================
